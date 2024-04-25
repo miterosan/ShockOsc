@@ -255,6 +255,25 @@ public static class ShockOsc
                 OsTask.Run(() => InstantShock(shocker, GetDuration(), GetIntensity()));
 
                 return;
+            case "IVibrate":
+                if (value is not true) return;
+                if (UnderscoreConfig.KillSwitch)
+                {
+                    shocker.TriggerMethod = TriggerMethod.None;
+                    await LogIgnoredKillSwitchActive();
+                    return;
+                }
+
+                if (_isAfk && Config.ConfigInstance.Behaviour.DisableWhileAfk)
+                {
+                    shocker.TriggerMethod = TriggerMethod.None;
+                    await LogIgnoredAfk();
+                    return;
+                }
+
+                OsTask.Run(() => InstantVibrate(shocker, 500, 40));
+
+                return;
             case "Stretch":
                 if (value is float stretch)
                     shocker.LastStretchValue = stretch;
@@ -355,6 +374,11 @@ public static class ShockOsc
         var template = Config.ConfigInstance.Chatbox.Types[ControlType.Shock];
         var msg = $"{Config.ConfigInstance.Chatbox.Prefix}{Smart.Format(template.Local, dat)}";
         await OscClient.SendChatboxMessage(msg);
+    }
+
+    private static async Task InstantVibrate(Shocker shocker, uint duration, byte intensity)
+    {
+        await ControlShocker(shocker.Id, duration, intensity, ControlType.Vibrate);
     }
 
     /// <summary>
